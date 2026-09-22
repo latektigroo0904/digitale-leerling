@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Digitale Leerling</title>
+</head>
+<body>
+  <main id="app">
+    <header>
+      <div>
+        <h1>Digitale Leerling</h1>
+        <p>Begint klein. Leert van jou.</p>
+      </div>
+      <button id="memoryBtn" class="ghost" aria-label="Geheugen bekijken">Geheugen</button>
+    </header>
+
+    <section id="messages" aria-live="polite"></section>
+
+    <form id="composer" autocomplete="off">
+      <button id="micBtn" type="button" aria-label="Spraak invoeren">🎙️</button>
+      <textarea id="input" rows="1" placeholder="Zeg of typ iets..." enterkeyhint="send"></textarea>
+      <button id="sendBtn" type="submit">Stuur</button>
+    </form>
+  </main>
+
+  <dialog id="memoryDialog">
+    <div class="dialog-head">
+      <h2>Wat hij geleerd heeft</h2>
+      <button id="closeMemory" class="ghost">Sluiten</button>
+    </div>
+    <div id="memoryList"></div>
+    <button id="resetBtn" class="danger">Wis geleerd geheugen</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
