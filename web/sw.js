@@ -1,8 +1,9 @@
-const CACHE = "digitale-leerling-v4";
+const CACHE = "digitale-leerling-v5";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
+  "./db.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icon.svg"
