@@ -1,0 +1,51 @@
+name: iOS Simulator Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "src-tauri/**"
+      - "package.json"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  build-ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      APPLE_DEVELOPMENT_TEAM: "0000000000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Rust + iOS simulator target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+
+      - name: Ensure CocoaPods
+        run: pod --version || brew install cocoapods
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Initialize Tauri iOS project
+        run: npm run tauri -- ios init --ci
+
+      - name: Build unsigned iOS simulator app
+        run: npm run tauri -- ios build --ci --no-sign --target aarch64-sim
+
+      - name: Upload iOS build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: digitale-leerling-ios-simulator
+          path: src-tauri/gen/apple/build/**
+          if-no-files-found: error
