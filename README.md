@@ -11,11 +11,12 @@ De leerling kent aanvankelijk alleen:
 - `kan`
 - `wil`
 
-Bij een onbekend woord vraagt hij naar de betekenis. De aangeleerde definities worden lokaal op het toestel opgeslagen.
+Bij een onbekend woord vraagt hij naar de betekenis. De aangeleerde definities worden lokaal op het toestel opgeslagen in IndexedDB. Bestaande gegevens uit de oudere localStorage-versie worden automatisch gemigreerd.
 
 ## Projectstructuur
 
 - `web/` — PWA/browserversie
+- `web/db.js` — IndexedDB-opslag en automatische migratie van oudere localStorage-data
 - `src-tauri/` — Tauri 2 shell voor desktop en mobiel
 - `.github/workflows/pwa-deploy.yml` — GitHub Pages
 - `.github/workflows/windows-build.yml` — Windows desktopbuild
