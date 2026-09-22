@@ -7,9 +7,10 @@
   };
 
   const state = {
-    memory: JSON.parse(localStorage.getItem("dl.memory") || "{}"),
-    pendingWord: localStorage.getItem("dl.pendingWord") || null,
-    awaitingDefinition: localStorage.getItem("dl.awaitingDefinition") === "1"
+    memory: {},
+    pendingWord: null,
+    awaitingDefinition: false,
+    storageReady: false
   };
 
   const messages = document.getElementById("messages");
@@ -24,13 +25,6 @@
   const app = document.getElementById("app");
 
   const known = () => ({ ...BASE, ...state.memory });
-
-  function save() {
-    localStorage.setItem("dl.memory", JSON.stringify(state.memory));
-    if (state.pendingWord) localStorage.setItem("dl.pendingWord", state.pendingWord);
-    else localStorage.removeItem("dl.pendingWord");
-    localStorage.setItem("dl.awaitingDefinition", state.awaitingDefinition ? "1" : "0");
-  }
 
   function normalizeWords(text) {
     return (text.toLowerCase().match(/[a-zA-ZÀ-ÿ0-9'-]+/g) || [])
@@ -71,20 +65,35 @@
     return normalizeWords(text).find(word => !dict[word]);
   }
 
-  function learnDefinition(word, definition) {
-    state.memory[word] = definition.trim();
-    state.pendingWord = null;
-    state.awaitingDefinition = false;
-    save();
-    bot(`Oké. Ik heb geleerd dat "${word}" betekent: ${definition.trim()}`);
+  async function persistConversationState() {
+    if (!state.storageReady) return;
+    await window.DLDB.setConversationState({
+      pendingWord: state.pendingWord,
+      awaitingDefinition: state.awaitingDefinition
+    });
   }
 
-  function respond(text) {
+  async function learnDefinition(word, definition) {
+    const cleanDefinition = definition.trim();
+
+    if (state.storageReady) {
+      await window.DLDB.putWord(word, cleanDefinition);
+    }
+
+    state.memory[word] = cleanDefinition;
+    state.pendingWord = null;
+    state.awaitingDefinition = false;
+    await persistConversationState();
+
+    bot(`Oké. Ik heb geleerd dat "${word}" betekent: ${cleanDefinition}`);
+  }
+
+  async function respond(text) {
     const clean = text.trim();
     if (!clean) return;
 
     if (state.awaitingDefinition && state.pendingWord) {
-      learnDefinition(state.pendingWord, clean);
+      await learnDefinition(state.pendingWord, clean);
       return;
     }
 
@@ -92,7 +101,7 @@
     if (unknown) {
       state.pendingWord = unknown;
       state.awaitingDefinition = true;
-      save();
+      await persistConversationState();
       bot(`Ik ken het woord "${unknown}" nog niet. Wat betekent "${unknown}"?`);
       return;
     }
@@ -103,17 +112,24 @@
       return;
     }
 
-    bot("Ik ken alle woorden in die zin. In deze eerste versie leer ik nog geen volledige grammatica. Dat bouwen we als volgende leerlaag.");
+    bot("Ik ken alle woorden in die zin. In deze versie leer ik nog geen volledige grammatica. Dat bouwen we als volgende leerlaag.");
   }
 
-  composer.addEventListener("submit", event => {
+  composer.addEventListener("submit", async event => {
     event.preventDefault();
     const text = input.value.trim();
     if (!text) return;
+
     addMessage(text, "user");
     input.value = "";
     input.style.height = "44px";
-    respond(text);
+
+    try {
+      await respond(text);
+    } catch (error) {
+      console.error(error);
+      bot("Er ging iets mis bij het bewaren. Probeer het nog eens.", false);
+    }
   });
 
   input.addEventListener("input", () => {
@@ -165,35 +181,83 @@
     micBtn.title = "Spraakherkenning wordt in deze browser niet ondersteund.";
   }
 
-  memoryBtn.addEventListener("click", () => {
+  memoryBtn.addEventListener("click", async () => {
+    if (state.storageReady) {
+      state.memory = await window.DLDB.getWordsMap();
+    }
+
     memoryList.innerHTML = "";
     for (const [word, definition] of Object.entries(known()).sort(([a], [b]) => a.localeCompare(b))) {
       const row = document.createElement("div");
       row.className = "memory-row";
+
       const title = document.createElement("b");
       title.textContent = word;
+
       const body = document.createElement("span");
       body.textContent = definition;
+
       row.append(title, body);
       memoryList.appendChild(row);
     }
+
     memoryDialog.showModal();
   });
 
   closeMemory.addEventListener("click", () => memoryDialog.close());
-  resetBtn.addEventListener("click", () => {
+
+  resetBtn.addEventListener("click", async () => {
     if (!confirm("Alle woorden die jij hebt aangeleerd wissen?")) return;
-    state.memory = {};
-    state.pendingWord = null;
-    state.awaitingDefinition = false;
-    save();
-    memoryDialog.close();
-    bot("Mijn aangeleerde geheugen is gewist. Ik ken opnieuw alleen mijn vier basiswoorden.");
+
+    try {
+      if (state.storageReady) {
+        await window.DLDB.clearLearnedMemory();
+      }
+
+      state.memory = {};
+      state.pendingWord = null;
+      state.awaitingDefinition = false;
+      memoryDialog.close();
+      bot("Mijn aangeleerde geheugen is gewist. Ik ken opnieuw alleen mijn vier basiswoorden.");
+    } catch (error) {
+      console.error(error);
+      bot("Ik kon mijn geheugen niet wissen.", false);
+    }
   });
 
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   }
 
-  bot('Eywa Q. Ik begin klein. Ik ken nu alleen "ik", "ben", "kan" en "wil". Leer mij iets.', false);
+  async function start() {
+    composer.querySelectorAll("button, textarea").forEach(element => {
+      element.disabled = true;
+    });
+
+    try {
+      await window.DLDB.init();
+      state.memory = await window.DLDB.getWordsMap();
+
+      const conversation = await window.DLDB.getConversationState();
+      state.pendingWord = conversation.pendingWord;
+      state.awaitingDefinition = conversation.awaitingDefinition;
+      state.storageReady = true;
+
+      bot('Eywa Q. Mijn geheugen gebruikt nu IndexedDB. Ik ken standaard "ik", "ben", "kan" en "wil". Leer mij iets.', false);
+
+      if (state.awaitingDefinition && state.pendingWord) {
+        bot(`We waren bezig met het woord "${state.pendingWord}". Wat betekent "${state.pendingWord}"?`, false);
+      }
+    } catch (error) {
+      console.error("IndexedDB kon niet worden gestart:", error);
+      bot("Mijn permanente geheugen kon niet worden geopend. Ik kan nu wel praten, maar nieuwe kennis blijft mogelijk niet bewaard.", false);
+    } finally {
+      composer.querySelectorAll("button, textarea").forEach(element => {
+        element.disabled = false;
+      });
+      input.focus({ preventScroll: true });
+    }
+  }
+
+  start();
 })();
