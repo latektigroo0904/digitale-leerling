@@ -1,26 +1,28 @@
 # Digitale Leerling
 
-Een experimentele leer-chat die bewust bijna zonder kennis start.
+Een experimentele leer-chat die bewust bijna zonder kennis start en stap voor stap door de gebruiker wordt aangeleerd.
 
 ## Startkennis
 
-De leerling kent alleen:
+De leerling kent aanvankelijk alleen:
 
 - `ik`
 - `ben`
 - `kan`
 - `wil`
 
-Bij een onbekend woord vraagt hij naar de betekenis en bewaart jouw antwoord lokaal in de browser.
+Bij een onbekend woord vraagt hij naar de betekenis. De aangeleerde definities worden lokaal op het toestel opgeslagen.
 
-## Project
+## Projectstructuur
 
-- `web/` — PWA
-- `src-tauri/` — Tauri 2 desktop/mobile shell
-- `.github/workflows/pwa-deploy.yml` — GitHub Pages deployment
-- `.github/workflows/ios-build.yml` — ongetekende iOS Simulator-build op een GitHub macOS runner
+- `web/` — PWA/browserversie
+- `src-tauri/` — Tauri 2 shell voor desktop en mobiel
+- `.github/workflows/pwa-deploy.yml` — GitHub Pages
+- `.github/workflows/windows-build.yml` — Windows desktopbuild
+- `.github/workflows/android-build.yml` — Android debug-APK
+- `.github/workflows/ios-build.yml` — ongetekende iOS Simulator-build op macOS
 
-## Lokaal PWA testen
+## PWA lokaal testen
 
 ```bash
 cd web
@@ -29,25 +31,39 @@ python -m http.server 8080
 
 Open daarna `http://localhost:8080`.
 
-## Desktop met Tauri
+## Desktop lokaal ontwikkelen
+
+Vereist Node.js, Rust en de platformvereisten van Tauri.
 
 ```bash
 npm install
 npm run desktop:dev
 ```
 
-Release-build:
+## Automatische builds
 
-```bash
-npm run desktop:build
-```
+Alle buildworkflows kunnen handmatig gestart worden via **GitHub → Actions** en draaien ook automatisch wanneer relevante bronbestanden veranderen.
 
-## iOS
+### Windows
 
-De GitHub Actions-workflow bouwt eerst een ongetekende Simulator-build.
-Voor installatie op een echte iPhone of distributie via TestFlight voegen we later jouw echte Apple Development Team en signing toe.
+De Windows-workflow maakt een NSIS-installer en bewaart die als GitHub Actions-artifact.
+
+### Android
+
+De Android-workflow maakt een debug-APK en bewaart die als GitHub Actions-artifact.
+
+### iOS
+
+De iOS-workflow initialiseert het Tauri/Xcode-project op een GitHub macOS-runner en maakt een ongetekende Simulator-build.
+
+Een Simulator-build kan niet rechtstreeks op een echte iPhone worden geïnstalleerd. Voor een echte iPhone/TestFlight-build voegen we later Apple signing, jouw Development Team en provisioning toe.
 
 ## GitHub Pages
 
-De PWA-workflow publiceert alleen `web/`.
-Eenmalig moet in GitHub **Settings → Pages → Source** op **GitHub Actions** staan.
+De workflow publiceert alleen `web/`.
+
+Eenmalige accountinstelling:
+
+**Repository → Settings → Pages → Build and deployment → Source → GitHub Actions**
+
+Daarna kunnen nieuwe versies automatisch naar GitHub Pages worden uitgerold.
