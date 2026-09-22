@@ -1,0 +1,15 @@
+{
+  "name": "digitale-leerling",
+  "version": "0.4.0",
+  "private": true,
+  "scripts": {
+    "tauri": "tauri",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "ios:init": "tauri ios init",
+    "ios:build:sim": "tauri ios build --ci --no-sign --target aarch64-sim"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.0"
+  }
+}
