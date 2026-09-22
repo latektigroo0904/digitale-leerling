@@ -1,0 +1,22 @@
+DIGITALE LEERLING V4
+
+Deze repository wordt rechtstreeks via GitHub beheerd.
+
+PWA:
+- web/index.html
+- web/app.js
+- web/styles.css
+- web/manifest.webmanifest
+
+GITHUB ACTIONS:
+- .github/workflows/pwa-deploy.yml
+- .github/workflows/ios-build.yml
+
+PWA online:
+1. GitHub > Settings > Pages
+2. Source = GitHub Actions
+3. De workflow Deploy PWA to GitHub Pages publiceert web/
+
+iOS:
+De iOS-workflow maakt eerst een ongetekende Simulator-build op een macOS-runner.
+Voor een echte iPhone/TestFlight-build voegen we later Apple signing toe.
