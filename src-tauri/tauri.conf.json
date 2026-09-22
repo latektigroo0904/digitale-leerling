@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Digitale Leerling",
+  "version": "0.4.0",
+  "identifier": "be.qke.digitaleleerling",
+  "build": {
+    "frontendDist": "../web"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Digitale Leerling",
+        "width": 900,
+        "height": 700,
+        "minWidth": 360,
+        "minHeight": 520,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "iOS": {
+      "minimumSystemVersion": "15.0"
+    }
+  }
+}
